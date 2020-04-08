@@ -10,6 +10,9 @@ const outputPath = path.join(OUTPUT_DIR, "team.html");
 
 const render = require("./lib/htmlRenderer");
 
+const employeesArr = [];
+let HTML = "";
+
 const engineerQue = [
     {
         type: "input",
@@ -24,7 +27,7 @@ const engineerQue = [
     {
         type: "input",
         message: "Enter Email: ",
-        name: "Email"
+        name: "email"
     },
     {
         type: "input",
@@ -32,6 +35,7 @@ const engineerQue = [
         name: "github"
     }
 ]
+
 const internQue = [
     {
         type: "input",
@@ -46,7 +50,7 @@ const internQue = [
     {
         type: "input",
         message: "Enter Email: ",
-        name: "Email"
+        name: "email"
     },
     {
         type: "input",
@@ -54,6 +58,7 @@ const internQue = [
         name: "school"
     }
 ]
+
 const managerQue = [
     {
         type: "input",
@@ -68,7 +73,7 @@ const managerQue = [
     {
         type: "input",
         message: "Enter Email: ",
-        name: "Email"
+        name: "email"
     },
     {
         type: "input",
@@ -77,9 +82,9 @@ const managerQue = [
     }
 ]
 
-let counter = 0;
 
 
+// ask to addd another employee - if so run collectInfo; if not create HTML file
 const addAnother = () => {
     inquirer.prompt([
         {
@@ -89,95 +94,97 @@ const addAnother = () => {
         }
     ]).then(response => {
 
-        if (response.addAnother = "Yes") {
-            console.log("ok");
-            // collectInfo();
-        } else {
-            console.log("Thanks for using my program!");
-            counter++;
-        }
+        if (response.addAnother === true) {
 
+            console.log("ok");
+            collectInfo();
+        } else {
+
+            HTML += render(employeesArr);
+            fs.writeFile(outputPath, HTML, err => console.log(err))
+            console.log("Thanks for using my program!");
+            return;
+        }
     })
+}
+
+
+
+const collectInfo = () => {
+    // Write code to use inquirer to gather information about the development team members,
+    // and to create objects for each team member (using the correct classes as blueprints!)
+    inquirer.prompt([
+        {
+            type: "list",
+            message: "Please select employee type: ",
+            choices: ["Intern", "Engineer", "Manager"],
+            name: "type"
+
+        }])
+        .then(response => {
+            if (response.type === "Intern") {
+                collectIntern();
+                
+            } else if (response.type === "Engineer") {
+                collectEngineer();
+                
+            } else {
+                collectManager();
+                
+            }
+            
+            function collectIntern() {
+                inquirer.prompt(internQue)
+                .then(response => {
+                    
+                    const employee = new Intern(response.name, response.id, response.email, response.school);
+                    employeesArr.push(employee);
+                    addAnother();   
+                })
+                .catch(err => console.log(err));
+            }
+
+            function collectEngineer() {
+                inquirer.prompt(engineerQue)
+                    .then(response => {
+
+                        const employee = new Engineer(response.name, response.id, response.email, response.github);
+                        employeesArr.push(employee);
+                        addAnother();
+           
+                    })
+                    .catch(err => console.log(err));
+            }
+
+            function collectManager() {
+                inquirer.prompt(managerQue)
+                    .then(response => {
+                        const employee = new Manager(response.name, response.id, response.email, response.officeNumber);
+                        employeesArr.push(employee);
+                        addAnother();
+         
+                    })
+                    .catch(err => console.log(err));
+            }
+
+            // After the user has input all employees desired, call the `render` function (required
+            // above) and pass in an array containing all employee objects; the `render` function will
+            // generate and return a block of HTML including templated divs for each employee!
+        })       
+        .catch(err => console.log(err))
 
 }
 
-// do {
 
-    // const collectInfo = () => {
-        // Write code to use inquirer to gather information about the development team members,
-        // and to create objects for each team member (using the correct classes as blueprints!)
-        inquirer.prompt([
-            {
-                type: "list",
-                message: "Please select employee type: ",
-                choices: ["Intern", "Engineer", "Manager"],
-                name: "type"
-
-            }])
-            .then(response => {
-                // After the user has input all employees desired, call the `render` function (required
-                // above) and pass in an array containing all employee objects; the `render` function will
-                // generate and return a block of HTML including templated divs for each employee!
-                if (response.type === "Intern") {
-                    collectIntern();
-                } else if (response.type === "Engineer") {
-                    collectEngineer();
-                } else {
-                    collectManager();
-                }
-
-                function collectIntern() {
-                    inquirer.prompt(internQue)
-                        .then(response => {
-
-                            const employee = new Intern(response.name, response.id, response.email, response.school);
-                            render([response.name, response.id, response.email, response.school])
-
-                        })
-                        .catch(err => console.log(err));
-                }
-
-                function collectEngineer() {
-                    inquirer.prompt(engineerQue)
-                        .then(response => {
-                            
-                            const employee = new Engineer(response.name, response.id, response.email, response.github)
-                            render([response.name, response.id, response.email, response.github])
-                            
-                        })
-                        .catch(err => console.log(err));
-                }
-
-                function collectManager() {
-                    inquirer.prompt(managerQue)
-                        .then(response => {
-                            
-                            const employee = new Manager(response.name, response.id, response.email, response.officeNumber)
-                            render([name, id, email, officeNumber])
-                            
-                        })
-                        .catch(err => console.log(err));
-
-                }
-
-
-
-
-
-            })
-            .then(addAnother())
-            .catch(err => console.log(err))
-
-    // }
-    
-
-// } while (counter === 0);
+collectInfo();
 
 // After you have your html, you're now ready to create an HTML file using the HTML
 // returned from the `render` function. Now write it to a file named `team.html` in the
 // `output` folder. You can use the variable `outputPath` above target this location.
 // Hint: you may need to check if the `output` folder exists and create it if it
 // does not.
+
+
 
 
 
